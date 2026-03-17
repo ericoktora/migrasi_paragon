@@ -1,20 +1,6 @@
 import mysql.connector
 
-# =============================
-# Fungsi helper
-# =============================
-def fix_datetime(val):
-    if val in [0, '0', '', None, '0000-00-00 00:00:00']:
-        return None
-    return val
-
-def fix_int(val, default=0):
-    return int(val) if str(val).isdigit() else default
-
-
-# =============================
-# Koneksi database
-# =============================
+# Koneksi database sumber
 db_awal = mysql.connector.connect(
     host="localhost",
     user="eric",
@@ -22,6 +8,7 @@ db_awal = mysql.connector.connect(
     database="slims_paragon_db"
 )
 
+# Koneksi database tujuan
 db_tujuan = mysql.connector.connect(
     host="localhost",
     user="eric",
@@ -32,23 +19,18 @@ db_tujuan = mysql.connector.connect(
 cursor_awal = db_awal.cursor(dictionary=True)
 cursor_tujuan = db_tujuan.cursor()
 
-
-# =============================
-# 1. Ambil ID valid
-# =============================
+# --- 1. Ambil semua id_transaksi_lab yang valid di tujuan ---
 cursor_tujuan.execute("SELECT id_transaksi_lab FROM transaksi_lab")
 valid_transaksi_lab = {row[0] for row in cursor_tujuan.fetchall()}
 
+# --- 2. Ambil semua id_transaksi_lab_detail yang sudah ada di tujuan ---
 cursor_tujuan.execute("SELECT id_transaksi_lab_detail FROM transaksi_lab_detail")
 existing_details = {row[0] for row in cursor_tujuan.fetchall()}
 
 print(f"ID transaksi_lab valid: {len(valid_transaksi_lab)}")
 print(f"ID transaksi_lab_detail existing: {len(existing_details)}")
 
-
-# =============================
-# 2. Ambil data sumber
-# =============================
+# --- 3. Ambil data dari sumber dengan join ---
 cursor_awal.execute("""
 SELECT DISTINCT
     tld.*,
@@ -61,47 +43,28 @@ LEFT JOIN transaksi_lab tl
 LEFT JOIN kode_lab kl 
     ON tld.id_kode_lab = kl.id_kode_lab
 """)
-
 data_joined = cursor_awal.fetchall()
+
 print(f"Total data sumber: {len(data_joined)}")
 
-
-# =============================
-# 3. Filter & normalisasi data
-# =============================
+# --- 4. Filter data yang valid & belum ada ---
 rows_to_insert = []
-
 for row in data_joined:
-
-    # Skip kalau tidak valid
     if row['id_transaksi_lab'] not in valid_transaksi_lab:
         continue
-
     if row['id_transaksi_lab_detail'] in existing_details:
         continue
 
-    # =============================
-    # FIX DATA
-    # =============================
-    row['acc'] = fix_int(row.get('acc'))
+    # Konversi acc
+    row['acc'] = int(row['acc']) if str(row['acc']).isdigit() else 0
 
-    # Fix datetime (INI YANG PENTING 🔥)
-    row['waktu_sampel'] = fix_datetime(row.get('waktu_sampel'))
-    row['created_at'] = fix_datetime(row.get('created_at'))
-    row['updated_at'] = fix_datetime(row.get('updated_at'))
-
-    # Optional: kalau ada field lain datetime
-    # row['validasi'] = fix_datetime(row.get('validasi'))
-
-    # =============================
-    # DEFAULT VALUE
-    # =============================
+    # Tambahkan field default
     row.update({
         'id_duplo_detail': None,
         'kode_hasil': '0',
         'id_asal': '1',
-        'satuan': row.get('satuan') or None,
-        'kode_his': row.get('kode_his') or None,
+        'satuan': row['satuan'] or None,
+        'kode_his': row['kode_his'] or None,
         'manual': 0,
         'status_note': 0,
         'note_hasil': None,
@@ -112,53 +75,36 @@ for row in data_joined:
 
 print(f"Data siap insert: {len(rows_to_insert)}")
 
-
-# =============================
-# 4. Query insert
-# =============================
+# --- 5. Insert batch dengan executemany ---
 query = """
-INSERT INTO transaksi_lab_detail (
-    id_transaksi_lab_detail, id_transaksi_lab, id_kode_lab,
-    kode_his, kode_tes, id_lab, kode_hasil,
-    hasil, satuan, cek_print, id_asal, flag, rujukan, ket,
-    acc, user_acc, validasi, user_validasi, 
-    harga, waktu_sampel, kritis, manual, status_note, note_hasil,
-    created_at, updated_at
-) VALUES (
-    %(id_transaksi_lab_detail)s, %(id_transaksi_lab)s, %(id_kode_lab)s,
-    %(kode_his)s, %(kode_tes)s, %(id_lab)s, %(kode_hasil)s,
-    %(hasil)s, %(satuan)s, %(cek_print)s, %(id_asal)s, %(flag)s, %(rujukan)s, %(ket)s,
-    %(acc)s, 1, %(acc)s, 1, 
-    %(harga)s, %(waktu_sampel)s, 0, %(manual)s, %(status_note)s, %(note_hasil)s,
-    %(created_at)s, %(updated_at)s
-)
+    INSERT INTO transaksi_lab_detail (
+        id_transaksi_lab_detail, id_transaksi_lab, id_kode_lab,
+        kode_his, kode_tes, id_lab, kode_hasil,
+        hasil, satuan, cek_print, id_asal, flag, rujukan, ket,
+        acc, user_acc, validasi, user_validasi, 
+        harga, kritis, manual, status_note, note_hasil,
+        created_at, updated_at
+    ) VALUES (
+        %(id_transaksi_lab_detail)s, %(id_transaksi_lab)s, %(id_kode_lab)s,
+        %(kode_his)s, %(kode_tes)s, %(id_lab)s, %(kode_hasil)s,
+        %(hasil)s, %(satuan)s, %(cek_print)s, %(id_asal)s, %(flag)s, %(rujukan)s, %(ket)s,
+        %(acc)s, 1, %(acc)s, 1, 
+        %(harga)s, 0, %(manual)s, %(status_note)s, %(note_hasil)s,
+        %(created_at)s, %(updated_at)s
+    )
 """
 
-
-# =============================
-# 5. Insert batch
-# =============================
 batch_size = 10000
 inserted = 0
-
 for i in range(0, len(rows_to_insert), batch_size):
     batch = rows_to_insert[i:i+batch_size]
-
     try:
         cursor_tujuan.executemany(query, batch)
         db_tujuan.commit()
-
         inserted += len(batch)
-        print(f"Batch {i//batch_size+1} OK ({len(batch)} row). Total: {inserted}/{len(rows_to_insert)}")
-
+        print(f"Batch {i//batch_size+1} OK ({len(batch)} row). Total inserted: {inserted}/{len(rows_to_insert)}")
     except Exception as e:
         db_tujuan.rollback()
-        print(f"❌ Gagal batch {i//batch_size+1}: {e}")
-
-        # DEBUG (ambil 1 row penyebab)
-        print("Contoh data error:")
-        print(batch[0])
-        break
-
+        print(f"Gagal insert batch {i//batch_size+1}: {e}")
 
 print(f"✅ Selesai. Total berhasil: {inserted}, dilewati: {len(data_joined) - inserted}")
