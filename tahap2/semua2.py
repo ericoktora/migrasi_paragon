@@ -9,8 +9,6 @@ scripts = [
     "tr_pkt_lab.py",
     "duplo.py",
     "duplo_detail.py",
-    "duplo_ori.py",
-    "duplo_ori_dt.py",
     "history.py",
     "tat.py",
     "query_tahap_2.py"

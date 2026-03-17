@@ -16,7 +16,6 @@ scripts = [
     "paket_lab_dt.py",
     "stt_assur.py",
     "users.py",
-    "waktu_pmr.py",
     "query_tahap_1.py",
 ]
 
