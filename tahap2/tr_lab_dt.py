@@ -89,7 +89,7 @@ query = """
         %(kode_his)s, %(kode_tes)s, %(id_lab)s, %(kode_hasil)s,
         %(hasil)s, %(satuan)s, %(cek_print)s, %(id_asal)s, %(flag)s, %(rujukan)s, %(ket)s,
         %(acc)s, 1, %(acc)s, 1, 
-        %(harga)s, %(waktu_sampel)s, %(kritis)s, %(manual)s, %(status_note)s, %(note_hasil)s,
+        %(harga)s, %(waktu_sampel)s, 0, %(manual)s, %(status_note)s, %(note_hasil)s,
         %(created_at)s, %(updated_at)s
     )
 """
