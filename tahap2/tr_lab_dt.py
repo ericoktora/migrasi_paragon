@@ -80,14 +80,14 @@ query = """
     INSERT INTO transaksi_lab_detail (
         id_transaksi_lab_detail, id_transaksi_lab, id_kode_lab,
         id_duplo_detail, kode_his, kode_tes, id_lab, kode_hasil,
-        hasil, satuan, sebelum, cek_print, id_asal, flag, rujukan, ket,
+        hasil, satuan, cek_print, id_asal, flag, rujukan, ket,
         acc, user_acc, validasi, user_validasi, alat, tgl_hasil,
         harga, waktu_sampel, kritis, manual, status_note, note_hasil,
         created_at, updated_at
     ) VALUES (
         %(id_transaksi_lab_detail)s, %(id_transaksi_lab)s, %(id_kode_lab)s,
         %(id_duplo_detail)s, %(kode_his)s, %(kode_tes)s, %(id_lab)s, %(kode_hasil)s,
-        %(hasil)s, %(satuan)s, %(sebelum)s, %(cek_print)s, %(id_asal)s, %(flag)s, %(rujukan)s, %(ket)s,
+        %(hasil)s, %(satuan)s, %(cek_print)s, %(id_asal)s, %(flag)s, %(rujukan)s, %(ket)s,
         %(acc)s, %(user_acc)s, %(validasi)s, %(user_validasi)s, %(alat)s, %(tgl_hasil)s,
         %(harga)s, %(waktu_sampel)s, %(kritis)s, %(manual)s, %(status_note)s, %(note_hasil)s,
         %(created_at)s, %(updated_at)s
