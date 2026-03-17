@@ -18,6 +18,8 @@ try:
 
     cursor.execute("UPDATE transaksi_lab set id_cara_masuk = 1;")
 
+    cursor.execute("UPDATE transaksi_lab set selesai = 1 where status = 4;")
+
     
     
 

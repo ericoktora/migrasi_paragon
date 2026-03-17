@@ -68,7 +68,7 @@ query = """
         1, %(sampel)s, %(jenis_sampel)s, %(catatan)s, %(status)s, %(jenis_permeriksaan)s,
         %(id_user)s, %(created_at)s, %(id_user)s, %(updated_at)s, %(tgl_order)s,
         %(updated_at)s, %(proses)s, %(prioritas)s, 0, 
-        %(selesai)s, %(created_at)s, %(updated_at)s, %(kesan)s, %(saran)s
+        0, %(created_at)s, %(updated_at)s, %(kesan)s, %(saran)s
     )
 """
 
